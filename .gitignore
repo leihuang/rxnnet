@@ -28,6 +28,10 @@ Thumbs.db
 .project
 .pydevproject
 
+.SloppyCell
+
+.cache
+
 # Mathematica
 *.nb
 
