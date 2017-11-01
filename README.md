@@ -2,6 +2,20 @@
 
 A Python package for representing **reaction networks** and simulating their behaviors (eg, transients, steady states and their parameter sensitivities). Currently implemented as a wrapper of SloppyCell (http://sloppycell.sourceforge.net/). 
 
+<!---
+Why a wrapper of SloppyCell: 
+    - Coding styles
+    - Extra functionalities such as steady states and mca
+
+What rxnnet can do:
+     - make networks
+     - encode rate laws
+     - network structures
+     - simulate networks
+     - get steady states
+     - mca
+-->
+
 ## Usage examples
 
 ```python

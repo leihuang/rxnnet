@@ -10,9 +10,15 @@ import SloppyCell.ReactionNetworks as scrn
 class Network(scrn.Network):
     """
     """
+    def add_species(self, id, compartment, initial_value=0, *args, **kwargs):
+        """A wrapper of SloppyCell.ReactionNetworks.Network.addSpecies.
+        """
+        self.addSpecies(id, compartment, initial_value, *args, **kwargs)
     
-    def add_reaction(self, id, stoich_or_eqn, ratelaw, p=None, **kwargs):
-        """A convenient wrapper of SloppyCell.ReactionNetworks.Network.addReaction 
+    
+    def add_reaction(self, id, stoich=None, eqn=None, ratelaw=None, p=None, 
+                     **kwargs):
+        """A wrapper of SloppyCell.ReactionNetworks.Network.addReaction. 
         
         Input:
             rxnid: a str; id of the reaction
@@ -28,12 +34,10 @@ class Network(scrn.Network):
         rxnid = id
         
         # get stoich
-        if isinstance(stoich_or_eqn, str):
-            eqn = stoich_or_eqn
+        assert not (stoich is None) and (eqn is None)
+        if eqn:
             stoich = _eqn2stoich(eqn)
-        else:
-            stoich = stoich_or_eqn
-        
+            
         # add parameters
         if p is not None:
             for pid, pinfo in p.items():
@@ -41,13 +45,11 @@ class Network(scrn.Network):
                     pval, is_optimizable = pinfo
                 else:
                     pval, is_optimizable = pinfo, True
-                if pid in self.parameters.keys():
-                    if self.parameters.get(pid).value != pval:
-                        raise ValueError("Value of parameter %s in reaction %s different."%\
-                                         (pid, rxnid)) 
-                else:
-                    self.add_parameter(pid, pval, is_optimizable=is_optimizable)
-    
+                self.add_parameter(pid, pval, is_optimizable=is_optimizable)
+        
+        if ratelaw is None:
+            ratelaw = '0' 
+        
         # add reaction
         self.addReaction(id=rxnid, stoichiometry=stoich, kineticLaw=ratelaw, 
                          **kwargs)
@@ -57,12 +59,11 @@ def _eqn2stoich(eqn):
     """Convert reaction equation (a str) to stoichiometry (a mapping).
     """
     def _unpack(s):
-        # an example of s: ' 2 ATP '
-        l = filter(None, s.split(' '))
-        if len(l) == 1:
-            sc_unsigned, spid = 1, l[0]   # sc: stoichcoef
-        elif len(l) == 2:
-            sc_unsigned, spid = eval(l[0]), l[1]
+        unpacked = filter(None, s.split(' '))  # an example of s: ' 2 ATP '
+        if len(unpacked) == 1:
+            sc_unsigned, spid = 1, unpacked[0]  # sc: stoichcoef
+        elif len(unpacked) == 2:
+            sc_unsigned, spid = eval(unpacked[0]), unpacked[1]
         else:
             raise 
         return spid, sc_unsigned
