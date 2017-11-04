@@ -11,14 +11,15 @@ class Network(scrn.Network):
     """
     """
     def add_species(self, id, compartment, initial_value=0, *args, **kwargs):
-        """A wrapper of SloppyCell.ReactionNetworks.Network.addSpecies.
+        """A wrapper of SloppyCell.ReactionNetworks.Network.add_species.
         """
-        self.addSpecies(id, compartment, initial_value, *args, **kwargs)
+        scrn.Network.add_species(self, id, compartment, initial_value, 
+                                 *args, **kwargs)
     
     
     def add_reaction(self, id, stoich=None, eqn=None, ratelaw=None, p=None, 
                      **kwargs):
-        """A wrapper of SloppyCell.ReactionNetworks.Network.addReaction. 
+        """A wrapper of SloppyCell.ReactionNetworks.Network.add_reaction. 
         
         Input:
             rxnid: a str; id of the reaction
@@ -34,7 +35,7 @@ class Network(scrn.Network):
         rxnid = id
         
         # get stoich
-        assert not (stoich is None) and (eqn is None)
+        assert not (stoich is None and eqn is None)
         if eqn:
             stoich = _eqn2stoich(eqn)
             
@@ -51,8 +52,21 @@ class Network(scrn.Network):
             ratelaw = '0' 
         
         # add reaction
-        self.addReaction(id=rxnid, stoichiometry=stoich, kineticLaw=ratelaw, 
-                         **kwargs)
+        scrn.Network.addReaction(self, id=rxnid, stoichiometry=stoich, 
+                                 kineticLaw=ratelaw, **kwargs)
+        
+    
+    @property
+    def p(self):
+        return util.Series([var.value for var in self.optimizableVars], 
+                           self.pids, dtype=np.float)
+        
+        
+    def get_traj(self):
+        pass
+    
+    
+    
     
 
 def _eqn2stoich(eqn):
