@@ -1,6 +1,11 @@
 # rxnnet
 
-A Python package for representing **reaction networks** and simulating their behaviors (eg, transients, steady states and their parameter sensitivities). Currently implemented as a wrapper of SloppyCell (http://sloppycell.sourceforge.net/). 
+A Python package for representing **reaction networks**, examining their structures and simulating their behaviors. Currently implemented as a wrapper of SloppyCell (http://sloppycell.sourceforge.net/). 
+
+Behaviors:
+- transients
+- steady states
+- parameter sensitivities of them
 
 <!---
 Why a wrapper of SloppyCell: 
