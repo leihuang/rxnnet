@@ -25,8 +25,8 @@ from rxnnet import network
 reload(network)
 
 
-#@pytest.fixture()
-def get_net():
+@pytest.fixture()
+def net():
     n = network.Network(id='net')
     n.add_compartment(id='env')
     n.add_compartment(id='cell')
@@ -42,7 +42,7 @@ def get_net():
 
 
 def test_get_N(net):
-    pass
+    assert net.N.values.tolist() == [[1.0, -1.0]]
 
 
 def test_get_K(net):
@@ -54,10 +54,16 @@ def test_get_P(net):
 
     
 def test_integrate(net):
-    """
-    """
-    assert net.id == 'net'
-
+    assert net.get_traj([0,1]).values.tolist() ==\
+        [[0.0], [1.2669505754952797]]
+    assert net.get_traj([2,3]).values.tolist() ==\
+        [[1.330028330417476], [1.3331687869183433]]
+    assert net.get_traj((0,1)).iloc[:3].values.tolist() ==\
+        [[0.0], [9.31322574614828e-13], [1.8626451492290054e-12]]
+    assert net.get_traj((0,1)).iloc[-3:].values.tolist() ==\
+        [[1.2653340809755658], [1.2661904908822275], [1.2669505754952797]]
+    assert net.get_traj((1,2)).iloc[:3].values.tolist() ==\
+        [[1.2669505754952797], [1.2670361148184137], [1.2678710886269715]]
 
 def test_get_s():
     pass

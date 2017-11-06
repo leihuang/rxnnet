@@ -1,11 +1,15 @@
 """
 """
 
+import fractions
+
+import numpy as np
+
 from util import Matrix
 
 
-def get_stoich_mat(net=None, rxnid2stoich=None, only_dynvar=True, 
-                   integerize=False, to_mat=True):
+def get_stoich_mat(net=None, rxnid2stoich=None, 
+                   only_dynvar=True, integerize=False):
     """Return the stoichiometry matrix (N) of the given network or 
     dict rxnid2stoich. Rows correspond to species, and columns correspond to 
     reactions.
@@ -23,13 +27,14 @@ def get_stoich_mat(net=None, rxnid2stoich=None, only_dynvar=True,
             rowvarids = net.xids
         else:
             rowvarids = net.spids
-        N = Matrix(np.zeros((len(rowvarids), len(net.rxnids))),
+
+        N = Matrix(np.zeros((len(rowvarids), net.vdim)),
                    rowvarids, net.rxnids)
+
         for spid in rowvarids:
             for rxnid in net.rxnids:
                 try:
                     stoichcoef = net.rxns[rxnid].stoichiometry[spid]
-                    # sometimes stoichcoefs are strings
                     if isinstance(stoichcoef, str):
                         stoichcoef = net.evaluate_expr(stoichcoef)
                     N.loc[spid, rxnid] = stoichcoef
@@ -61,6 +66,4 @@ def get_stoich_mat(net=None, rxnid2stoich=None, only_dynvar=True,
             denom = np.prod(list(set(denoms)))
             N.iloc[:,i] = col * denom
         
-    if not to_mat:
-        N = N.values
     return N

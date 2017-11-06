@@ -71,7 +71,9 @@ def integrate(net, times, p=None, x0=None, tol=None, varids=None):
 
     t0 = times[0]
     if t0 != 0:
-        _times = [0] + list(times)  
+        _times = [0] + list(times)  # _times: for feeding the integrator
+    else:
+        _times = times
 
     if p is not None:
         net.p = p
@@ -93,13 +95,11 @@ def integrate(net, times, p=None, x0=None, tol=None, varids=None):
 
     traj = out[0]
     traj[0] = x0  # daskr.daeint messes up the first timepoint, or does it? FIXME
-
-    if intermediate_output:
-        _times = out[1]
+    times = out[1]
 
     if t0 != 0:
-        idx_t0 = list(_times).index(t0)  # used for dense output
-        times = _times[idx_t0:]
+        idx_t0 = list(times).index(t0)  # used for dense output
+        times = times[idx_t0:]
         traj = traj[idx_t0:]
 
     return Trajectory(traj, index=pd.Index(times, name='time'), 

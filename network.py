@@ -7,7 +7,9 @@ from collections import OrderedDict as OD
 import numpy as np
 import SloppyCell.ReactionNetworks as scrn 
 
-from rxnnet import util, dynamics
+from rxnnet.util import Series
+from rxnnet import structure, dynamics 
+reload(structure)
 reload(dynamics)
 
 
@@ -87,7 +89,7 @@ class Network(scrn.Network, object):  # scrn.Network is an old-style class
 
     @property
     def p(self):
-        return util.Series([var.value for var in self.optimizableVars], 
+        return Series([var.value for var in self.optimizableVars], 
                            self.pids, dtype=np.float)
 
         
@@ -98,7 +100,7 @@ class Network(scrn.Network, object):  # scrn.Network is an old-style class
 
     @property
     def p0(self):
-        return util.Series([var.initialValue for var in self.optimizableVars], 
+        return Series([var.initialValue for var in self.optimizableVars], 
                            self.pids, dtype=np.float)    
 
 
@@ -109,13 +111,13 @@ class Network(scrn.Network, object):  # scrn.Network is an old-style class
 
     @property
     def x0(self):
-        return util.Series([var.initialValue for var in self.dynamicVars], 
+        return Series([var.initialValue for var in self.dynamicVars], 
                            self.xids, dtype=np.float)
 
 
     @property
     def x(self):
-        return util.Series([var.value for var in self.dynamicVars], 
+        return Series([var.value for var in self.dynamicVars], 
                            self.xids, dtype=np.float)
 
 
@@ -123,6 +125,26 @@ class Network(scrn.Network, object):  # scrn.Network is an old-style class
     def x(self, x_new):
         self.set_var_vals(x_new.to_dict())
 
+
+    @property
+    def rxnids(self):
+        return self.reactions.keys()
+
+
+    @property
+    def rxns(self):
+        return Series(self.reactions.values(),
+                           index=self.reactions.keys(), dtype=object)
+
+
+    def get_stoich_mat(self, *args, **kwargs):
+        return structure.get_stoich_mat(net=self, *args, **kwargs)
+    get_stoich_mat.__doc__ = structure.get_stoich_mat.__doc__
+
+
+    @property
+    def N(self):
+        return self.get_stoich_mat(only_dynvar=True, integerize=False)
 
 
     def integrate(self, *args, **kwargs):
