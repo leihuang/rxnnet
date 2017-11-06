@@ -1,8 +1,9 @@
 """
 """
 
-import re
+from __future__ import division
 from collections import OrderedDict as OD 
+import re
 
 import numpy as np
 import SloppyCell.ReactionNetworks as scrn 
@@ -108,7 +109,7 @@ class Network(scrn.Network, object):  # scrn.Network is an old-style class
     @property
     def p0(self):
         return Series([var.initialValue for var in self.optimizableVars], 
-                           self.pids, dtype=np.float)    
+                      self.pids, dtype=np.float)    
 
 
     @property
@@ -119,13 +120,13 @@ class Network(scrn.Network, object):  # scrn.Network is an old-style class
     @property
     def x0(self):
         return Series([var.initialValue for var in self.dynamicVars], 
-                           self.xids, dtype=np.float)
+                      self.xids, dtype=np.float)
 
 
     @property
     def x(self):
         return Series([var.value for var in self.dynamicVars], 
-                           self.xids, dtype=np.float)
+                      self.xids, dtype=np.float)
 
 
     @x.setter
@@ -137,6 +138,13 @@ class Network(scrn.Network, object):  # scrn.Network is an old-style class
 
 
     @property
+    def c(self):
+        return Series(OD([(sp.id, sp.value) for sp in self.species 
+                          if sp.is_constant]), 
+                      dtype=np.float)
+
+
+    @property
     def rxnids(self):
         return self.reactions.keys()
 
@@ -144,7 +152,12 @@ class Network(scrn.Network, object):  # scrn.Network is an old-style class
     @property
     def rxns(self):
         return Series(self.reactions.values(),
-                           index=self.reactions.keys(), dtype=object)
+                      index=self.reactions.keys(), dtype=object)
+
+
+    @property
+    def ratelaws(self):
+        return self.rxns.apply(lambda rxn: rxn.kineticLaw)
 
 
     def get_stoich_mat(self, *args, **kwargs):
@@ -161,6 +174,11 @@ class Network(scrn.Network, object):  # scrn.Network is an old-style class
         return dynamics.integrate(self, *args, **kwargs)
     integrate.__doc__ = dynamics.integrate.__doc__
     get_traj = integrate
+
+
+    def get_s(self, *args, **kwargs):
+        return steadystate.get_s(self, *args, **kwargs)
+    get_s.__doc__ = steadystate.get_s.__doc__
 
 
     

@@ -11,7 +11,7 @@ Structures:
 - link matrix L where N = L Nr
 
 Behaviors:
-- transients x(t)
+- dynamics x(t)
 - steady states s = x(inf) and J = v(s, p)
 - parameter sensitivities of them dx(t)/dp, Rs = ds/dp and RJ = dJ/dp 
   - elasticities Ep = dv/dp and Ex = dv/dx 

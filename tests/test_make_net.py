@@ -54,20 +54,20 @@ def test_get_P(net):
 
     
 def test_integrate(net):
-    assert (net.get_traj([0,1]).values.tolist() ==
+    assert (net.integrate([0,1]).values.tolist() ==
         [[0.0], [1.2669505754952797]])
-    assert (net.get_traj([2,3]).values.tolist() ==
+    assert (net.integrate([2,3]).values.tolist() ==
         [[1.330028330417476], [1.3331687869183433]])
-    assert (net.get_traj((0,1)).iloc[:3].values.tolist() ==
+    assert (net.integrate((0,1)).iloc[:3].values.tolist() ==
         [[0.0], [9.31322574614828e-13], [1.8626451492290054e-12]])
-    assert (net.get_traj((0,1)).iloc[-3:].values.tolist() ==
+    assert (net.integrate((0,1)).iloc[-3:].values.tolist() ==
         [[1.2653340809755658], [1.2661904908822275], [1.2669505754952797]])
-    assert (net.get_traj((1,2)).iloc[:3].values.tolist() ==
+    assert (net.integrate((1,2)).iloc[:3].values.tolist() ==
         [[1.2669505754952797], [1.2670361148184137], [1.2678710886269715]])
 
 
 def test_get_s():
-    pass
+    assert net.get_s().iloc[0] == 1.3333333333333333
 
 
 def test_get_Ep():
