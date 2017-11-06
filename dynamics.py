@@ -102,6 +102,9 @@ def integrate(net, times, p=None, x0=None, tol=None, varids=None):
         times = times[idx_t0:]
         traj = traj[idx_t0:]
 
+    net.x = traj[-1]
+    net.t = times[-1]
+
     return Trajectory(traj, index=pd.Index(times, name='time'), 
                       columns=net.xids)
 

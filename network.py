@@ -16,6 +16,10 @@ reload(dynamics)
 class Network(scrn.Network, object):  # scrn.Network is an old-style class
     """
     """
+    def __init__(self, *args, **kwargs):
+        scrn.Network.__init__(self, *args, **kwargs)
+        self.t = 0
+
 
     def add_species(self, id, compartment, initial_value=0, *args, **kwargs):
         """A wrapper of SloppyCell.ReactionNetworks.Network.add_species.
@@ -95,7 +99,10 @@ class Network(scrn.Network, object):  # scrn.Network is an old-style class
         
     @p.setter
     def p(self, p_new):
-        self.set_var_vals(p_new.to_dict())
+        try:
+            self.set_var_vals(p_new.to_dict())
+        except AttributeError:
+            self.set_var_vals(dict(zip(self.pids, p_new)))
 
 
     @property
@@ -123,7 +130,10 @@ class Network(scrn.Network, object):  # scrn.Network is an old-style class
 
     @x.setter
     def x(self, x_new):
-        self.set_var_vals(x_new.to_dict())
+        try:
+            self.set_var_vals(x_new.to_dict())
+        except AttributeError:
+            self.set_var_vals(dict(zip(self.xids, x_new)))
 
 
     @property
@@ -152,8 +162,7 @@ class Network(scrn.Network, object):  # scrn.Network is an old-style class
     integrate.__doc__ = dynamics.integrate.__doc__
     get_traj = integrate
 
-    
-    
+
     
 
 def _eqn2stoich(eqn):

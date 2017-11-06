@@ -67,3 +67,14 @@ def get_stoich_mat(net=None, rxnid2stoich=None,
             N.iloc[:,i] = col * denom
         
     return N
+
+
+def get_pool_mul_mat(self):
+    pass
+
+
+def get_ss_flux_mat(self):
+    pass
+
+
+
