@@ -2,7 +2,7 @@
 
 A Python package for representing **reaction networks**, examining their **structures** and simulating their **behaviors**. Currently implemented as a wrapper of SloppyCell (http://sloppycell.sourceforge.net/). 
 
-Mathematically, a reaction network can be represented as dx/dt = N v(x,p), where x, v and p are concentration, rate and parameter vectors, respectively and N is stoichiometry matrix. 
+Mathematically, a reaction network can be represented as dx/dt = N v(x,p), where x, v and p are the concentration, rate and parameter vectors, respectively and N is the stoichiometry matrix.
 
 Structures:
 - stoichiometry matrix N
@@ -13,9 +13,9 @@ Structures:
 Behaviors:
 - transients x(t)
 - steady states s = x(inf) and J = v(s, p)
-- parameter sensitivities of them Rs = ds/dp and RJ = dJ/dp 
--- elasticities Ep = dv/dp and Ex = dv/dx 
--- control matrices Cs = -(N Es)^{-1} N and CJ = I + Es Cs
+- parameter sensitivities of them dx(t)/dp, Rs = ds/dp and RJ = dJ/dp 
+  - elasticities Ep = dv/dp and Ex = dv/dx 
+  - control matrices Cs = -(N Es)^{-1} N and CJ = I + Es Cs
 
 <!---
 Why a wrapper of SloppyCell: 
