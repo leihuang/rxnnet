@@ -1,6 +1,6 @@
 # rxnnet
 
-A Python package for representing **reaction networks**, examining their **structures** and simulating their **behaviors**. Currently implemented as a wrapper of SloppyCell (http://sloppycell.sourceforge.net/). 
+A Python package for representing **reaction networks**, and computing their **structures** and **behaviors**. Currently implemented as a wrapper of SloppyCell (http://sloppycell.sourceforge.net/). 
 
 Mathematically, a reaction network can be represented as dx/dt = N v(x,p), where x, v and p are the concentration, rate and parameter vectors, respectively and N is the stoichiometry matrix.
 
