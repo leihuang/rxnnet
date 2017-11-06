@@ -22,10 +22,11 @@ Design:
 import pytest
 
 from rxnnet import network
+reload(network)
 
 
-@pytest.fixture()
-def net():
+#@pytest.fixture()
+def get_net():
     n = network.Network(id='net')
     n.add_compartment(id='env')
     n.add_compartment(id='cell')
@@ -40,7 +41,21 @@ def net():
     return n
 
 
-def test_get_traj(net):
+def test_get_N(net):
+    pass
+
+
+def test_get_K(net):
+    pass
+
+
+def test_get_P(net):
+    pass
+
+    
+def test_integrate(net):
+    """
+    """
     assert net.id == 'net'
 
 
@@ -48,9 +63,30 @@ def test_get_s():
     pass
 
 
-def test_get_N():
+def test_get_Ep():
     pass
 
 
-def test_get_K():
+def test_get_Ex():
     pass
+
+
+def test_get_jac():
+    pass
+
+
+def test_get_Cs():
+    pass
+
+
+def test_get_CJ():
+    pass
+
+
+def test_get_Rs():
+    pass
+
+
+def test_get_RJ():
+    pass
+

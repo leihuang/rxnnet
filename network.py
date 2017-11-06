@@ -4,12 +4,17 @@
 import re
 from collections import OrderedDict as OD 
 
+import numpy as np
 import SloppyCell.ReactionNetworks as scrn 
 
+from rxnnet import util, dynamics
+reload(dynamics)
 
-class Network(scrn.Network):
+
+class Network(scrn.Network, object):  # scrn.Network is an old-style class
     """
     """
+
     def add_species(self, id, compartment, initial_value=0, *args, **kwargs):
         """A wrapper of SloppyCell.ReactionNetworks.Network.add_species.
         """
@@ -21,16 +26,20 @@ class Network(scrn.Network):
                      **kwargs):
         """A wrapper of SloppyCell.ReactionNetworks.Network.add_reaction. 
         
-        Input:
-            rxnid: a str; id of the reaction
-            stoich_or_eqn: a mapping (stoich, eg, {'S':-1, 'P':1}) or 
+        :param id: id of the reaction
+        :type id: str
+        :param stoich: a mapping (stoich, eg, {'S':-1, 'P':1}) or 
                 a str (eqn, eg, 'S<->P'); if an eqn is provided, 
                 bidirectional arrow ('<->') denotes reversible reaction and 
                 unidirectional arrow ('->') denotes irreversible reaction
-            ratelaw:
-            p: a dict; map from pid to pinfo, where pinfo can be 
+        :param eqn: 
+        :type eqn: str
+        :param ratelaw:
+        :type ratelaw:
+        :param p: map from pid to pinfo, where pinfo can be 
                 a float (pval) or a tuple (pval, is_optimizable); 
                 eg, p={'V_R1':1, 'KM_S':2, 'KE_R1':(1, False)}
+        :type p:
         """
         rxnid = id
         
@@ -54,17 +63,73 @@ class Network(scrn.Network):
         # add reaction
         scrn.Network.addReaction(self, id=rxnid, stoichiometry=stoich, 
                                  kineticLaw=ratelaw, **kwargs)
-        
+
+
+    @property
+    def xdim(self):
+        return len(self.dynamicVars)
+
+
+    @property
+    def pdim(self):
+        return len(self.optimizableVars)
+
+
+    @property
+    def vdim(self):
+        return len(self.reactions)
+
     
+    @property
+    def pids(self):
+        return self.optimizableVars.keys()
+
+
     @property
     def p(self):
         return util.Series([var.value for var in self.optimizableVars], 
                            self.pids, dtype=np.float)
+
         
-        
-    def get_traj(self):
-        pass
-    
+    @p.setter
+    def p(self, p_new):
+        self.set_var_vals(p_new.to_dict())
+
+
+    @property
+    def p0(self):
+        return util.Series([var.initialValue for var in self.optimizableVars], 
+                           self.pids, dtype=np.float)    
+
+
+    @property
+    def xids(self):
+        return self.dynamicVars.keys()
+
+
+    @property
+    def x0(self):
+        return util.Series([var.initialValue for var in self.dynamicVars], 
+                           self.xids, dtype=np.float)
+
+
+    @property
+    def x(self):
+        return util.Series([var.value for var in self.dynamicVars], 
+                           self.xids, dtype=np.float)
+
+
+    @x.setter
+    def x(self, x_new):
+        self.set_var_vals(x_new.to_dict())
+
+
+
+    def integrate(self, *args, **kwargs):
+        return dynamics.integrate(self, *args, **kwargs)
+    integrate.__doc__ = dynamics.integrate.__doc__
+    get_traj = integrate
+
     
     
     
