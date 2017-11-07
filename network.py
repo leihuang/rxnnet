@@ -145,6 +145,15 @@ class Network(scrn.Network, object):  # scrn.Network is an old-style class
 
 
     @property
+    def constants(self):
+        """Replacing the constantVarValues attribute of scrn.Network instances,
+        as it is buggy and does not update upon changing p in certain ways.
+        """
+        return Series([var.value for var in self.constantVars], 
+                      self.constantVars.keys(), dtype=np.float)
+
+
+    @property
     def rxnids(self):
         return self.reactions.keys()
 
