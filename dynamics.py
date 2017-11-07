@@ -4,8 +4,8 @@
 from __future__ import division
 
 import pandas as pd
+import numpy as np
 from SloppyCell import daskr
-from SloppyCell.ReactionNetworks import Dynamics
 
 
 TOL = 1e-12
@@ -15,8 +15,15 @@ class Trajectory(pd.DataFrame):
     pass
 
 
-def integrate(net, times, p=None, x0=None, tol=None, varids=None):
-    """
+def integrate(net, times, p=None, tol=None, varids=None):
+    """A wrapper of SloppyCell.daskr.daeint.
+
+    Two nonintuitive behaviors of daskr.daeint are fixed here:
+    1) x(t0) always falsely takes the value of x(t1), where t0 and t1 are 
+        the first and second time points in the return traj;
+    2) when the argument times does not start from 0, the integration goes
+        from 0 to tmax-tmin.
+
     :param net:
     :type net:
     :param times:
@@ -28,24 +35,25 @@ def integrate(net, times, p=None, x0=None, tol=None, varids=None):
     else:
         intermediate_output=False
 
+    # _times: for feeding the integrator
     t0 = times[0]
-    if t0 != 0:
-        _times = [0] + list(times)  # _times: for feeding the integrator
-    else:
+    if t0 == 0:
+        x0 = net.x0
         _times = times
+    elif t0 != 0 and t0 != net.t:
+        x0 = net.x0
+        _times = [0] + list(times)  
+    else:  # t0 not 0 but t0 equal to net.t
+        x0 = net.x
+        _times = np.array(times) - t0
 
     if p is not None:
         net.p = p
-    
-    if x0 is None:
-        x0 = net.x0
-
     if tol is None:
         tol = TOL
-    
     if not hasattr(net, 'res_function'):
         net.compile()
-        
+    
     out = daskr.daeint(res=net.res_function, t=_times, 
                        y0=x0.copy(), yp0=[0]*net.xdim, 
                        atol=[tol]*net.xdim, rtol=[tol]*net.xdim, 
@@ -53,13 +61,15 @@ def integrate(net, times, p=None, x0=None, tol=None, varids=None):
                        rpar=net.constantVarValues)
 
     traj = out[0]
-    traj[0] = x0  # daskr.daeint messes up the first timepoint, or does it? FIXME
+    traj[0] = x0
     times = out[1]
 
-    if t0 != 0:
-        idx_t0 = list(times).index(t0)  # used for dense output
+    if t0 != 0 and t0 != net.t:
+        idx_t0 = list(times).index(t0)
         times = times[idx_t0:]
         traj = traj[idx_t0:]
+    if t0 != 0 and t0 == net.t:
+        times = times + t0
 
     net.x = traj[-1]
     net.t = times[-1]

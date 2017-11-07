@@ -9,7 +9,7 @@ import numpy as np
 import SloppyCell.ReactionNetworks as scrn 
 
 from rxnnet.util import Series
-from rxnnet import structure, dynamics 
+from rxnnet import structure, dynamics, steadystate
 reload(structure)
 reload(dynamics)
 
