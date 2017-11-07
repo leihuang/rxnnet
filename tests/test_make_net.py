@@ -20,6 +20,7 @@ Design:
 """
 
 import pytest
+import numpy as np
 
 from rxnnet import network
 reload(network)
@@ -54,16 +55,15 @@ def test_get_P(net):
 
     
 def test_integrate(net):
-    assert (net.integrate([0,1]).values.tolist() ==
-        [[0.0], [1.2669505754952797]])
-    assert (net.integrate([2,3]).values.tolist() ==
-        [[1.330028330417476], [1.3331687869183433]])
-    assert (net.integrate((0,1)).iloc[:3].values.tolist() ==
-        [[0.0], [9.31322574614828e-13], [1.8626451492290054e-12]])
-    assert (net.integrate((0,1)).iloc[-3:].values.tolist() ==
-        [[1.2653340809755658], [1.2661904908822275], [1.2669505754952797]])
-    assert (net.integrate((1,2)).iloc[:3].values.tolist() ==
-        [[1.2669505754952797], [1.2670361148184137], [1.2678710886269715]])
+    assert all(np.isclose(net.integrate([0,1]), [[0.0], [1.2669505754952797]]))
+    assert all(np.isclose(net.integrate([2,3]),
+        [[1.330028330417476], [1.3331687869183433]]))
+    assert all(np.isclose(net.integrate((0,1)).iloc[:3],
+        [[0.0], [9.31322574614828e-13], [1.8626451492290054e-12]]))
+    assert all(np.isclose(net.integrate((0,1)).iloc[-3:],
+        [[1.2653340809755658], [1.2661904908822275], [1.2669505754952797]]))
+    assert all(np.isclose(net.integrate((1,2)).iloc[[0,-1]],
+        [[1.2669505754952797], [1.330028330418152]]))
 
 
 def test_get_s():
