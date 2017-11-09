@@ -7,15 +7,15 @@ Mathematically, a reaction network can be represented as dx/dt = N v(x,p), where
 Structures:
 - stoichiometry matrix N
 - left and right null spaces of N
-- reduced stoichiometry matrix Nr (a selection of N rows with trivial left null space)
-- link matrix L where N = L Nr
+- reduced stoichiometry matrix N<sub>r</sub> (a selection of N rows with trivial left null space)
+- link matrix L where N = L N<sub>r</sub>
 
 Behaviors:
 - dynamics x(t)
 - steady states s = x(inf) and J = v(s, p)
 - parameter sensitivities of them dx(t)/dp, Rs = ds/dp and RJ = dJ/dp 
   - elasticities Ep = dv/dp and Ex = dv/dx 
-  - control matrices Cs = -(N Es)^{-1} N and CJ = I + Es Cs
+  - control matrices C<sup>s</sup> = -(N Es)^{-1} N and C<sup>J</sup> = I + Es Cs
 
 <!---
 Why a wrapper of SloppyCell: 
