@@ -15,7 +15,7 @@ Behaviors:
 - steady states s = x(inf) and J = v(s, p)
 - parameter sensitivities of them dx(t)/dp, R<sup>s</sup> = ds/dp and R<sup>J</sup> = dJ/dp 
   - elasticities E<sub>p</sub> = dv/dp and E<sub>x</sub> = dv/dx 
-  - control matrices C<sup>s</sup> = -(N Es)^{-1} N and C<sup>J</sup> = I + Es Cs
+  - control matrices C<sup>s</sup> = -(N E<sub>s</sub>)<sup>-1</sup> N and C<sup>J</sup> = I + E<sub>s</sub> C<sup>s</sup>
 
 <!---
 Why a wrapper of SloppyCell: 
