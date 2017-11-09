@@ -15,7 +15,7 @@ class Trajectory(pd.DataFrame):
     pass
 
 
-def integrate(net, times, p=None, tol=None, varids=None):
+def integrate(net, times, p=None, x0=None, tol=None, varids=None):
     """A wrapper of SloppyCell.daskr.daeint.
 
     Two nonintuitive behaviors of daskr.daeint are fixed here:
@@ -35,12 +35,21 @@ def integrate(net, times, p=None, tol=None, varids=None):
     else:
         intermediate_output=False
 
+    # t0 == 0 and x0 == None
+    # t0 == 0 and x0 != None
+    # t0 != 0 and x0 == None
+    # t
+
+    # t0 != 0, x0 provided
+
+
+
     # _times: for feeding the integrator
     t0 = times[0]
     if t0 == 0:
         x0 = net.x0
         _times = times
-    elif t0 != 0 and t0 != net.t:
+    elif t0 != 0 and x0 != net.x:
         x0 = net.x0
         _times = [0] + list(times)  
     else:  # t0 not 0 but t0 equal to net.t
@@ -72,7 +81,7 @@ def integrate(net, times, p=None, tol=None, varids=None):
         times = times + t0
 
     net.x = traj[-1]
-    net.t = times[-1]
+    net.t = times[-1]  
 
     return Trajectory(traj, index=pd.Index(times, name='time'), 
                       columns=net.xids)

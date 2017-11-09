@@ -14,11 +14,36 @@ reload(structure)
 reload(dynamics)
 
 
-class Network(scrn.Network, object):  # scrn.Network is an old-style class
+class Network(object, scrn.Network):  # scrn.Network is an old-style class
     """
     """
+
+    """
+    __slots__ = ('add_species', 'add_reaction', 
+                 'xdim', 'pdim', 'vdim',
+                 'pids', #'p', 'p0', 
+                 'xids', 'x', 'x0',
+                 'c', 'constants', 
+                 'rxnids', 'rxns', 'ratelaws',
+                 'get_stoich_mat', 'N', 
+                 'integrate', 'get_traj',
+                 'get_s', 
+
+                 't',
+
+                 'set_var_vals',
+
+        ) 
+    """  
+
+
     def __init__(self, *args, **kwargs):
         scrn.Network.__init__(self, *args, **kwargs)
+        """
+        Thoughts on self.t:
+            Can easily introduce bugs, whenver the vector field is changed
+            but self.t and self.x0 are not reset
+        """
         self.t = 0
 
 
@@ -154,19 +179,41 @@ class Network(scrn.Network, object):  # scrn.Network is an old-style class
 
 
     @property
+    def vars(self):
+        return Series(OD(self.variables.items()), dtype=object)
+    
+
+    @property
+    def varvals(self):
+        return Series(OD([(var.id, var.value) for var in self.variables]), 
+                      dtype=np.float)
+
+    
+    @property
+    def varids(self):
+        return self.variables.keys()
+
+
+    @property
     def rxnids(self):
         return self.reactions.keys()
 
 
     @property
     def rxns(self):
-        return Series(self.reactions.values(),
-                      index=self.reactions.keys(), dtype=object)
+        return Series(OD([(rxn.id, rxn) for rxn in self.reactions]), 
+                      dtype=object)
 
 
     @property
     def ratelaws(self):
-        return self.rxns.apply(lambda rxn: rxn.kineticLaw)
+        return Series(OD([(rxn.id, rxn.kineticLaw) for rxn in self.reactions]),
+                      dtype=object)
+
+
+    @property
+    def asgrules(self):
+        return Series(OD(self.assignmentRules.items()), dtype=object)
 
 
     def get_stoich_mat(self, *args, **kwargs):
@@ -177,6 +224,26 @@ class Network(scrn.Network, object):  # scrn.Network is an old-style class
     @property
     def N(self):
         return self.get_stoich_mat(only_dynvar=True, integerize=False)
+
+
+    @property
+    def Nr(self):
+        pass
+
+
+    @property
+    def L(self):
+        pass
+
+
+    @property
+    def K(self):
+        pass
+
+
+    @property
+    def P(self):
+        pass
 
 
     def integrate(self, *args, **kwargs):
@@ -190,7 +257,46 @@ class Network(scrn.Network, object):  # scrn.Network is an old-style class
     get_s.__doc__ = steadystate.get_s.__doc__
 
 
-    
+    def set_ss(self):
+        pass
+
+
+    @property
+    def s(self):
+        self.set_ss()
+        return self.x
+
+
+    @property
+    def v(self):
+        return Series(OD([(rxn.id, self.evaluate_expr(rxn.kineticLaw)) 
+                          for rxn in self.reactions]), 
+                      dtype=np.float)
+
+
+    @property
+    def J(self):
+        self.set_ss()
+        return self.v
+
+
+    def update(self, p=None, x=None, t=None):
+        """
+        """
+        if p is not None:
+            self.p = p
+
+        if x is not None:
+            self.x = x
+
+        if t is not None:
+            if t == np.inf:
+                if not self.test_ss():
+                    self.set_ss()
+            else:
+                pass
+
+
 
 def _eqn2stoich(eqn):
     """Convert reaction equation (a str) to stoichiometry (a mapping).

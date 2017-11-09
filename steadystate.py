@@ -31,7 +31,6 @@ def get_dxdt(net):
     return Series(dxdt, index=net.xids)
 
 
-
 def test_ss(net, tol=None):
     """Determine whether the net has reached steady state.
     
@@ -72,13 +71,14 @@ def get_s_integration(net, p=None, Tmin=None, Tmax=None, k=None, tol=None):
         tol = TOL
         
     if p is not None:
-        net.update(p=p)
+        net.p = p
         
-    if net.is_ss(tol=tol):
+    if net.test_ss(tol=tol):
         return net.x
     else:
         t = Tmin
         while t <= Tmax:
+
             net.update(t=t)  # could spit out daeintException
             if net.is_ss(tol=tol_ss):
                 return net.x
@@ -98,4 +98,3 @@ def get_s(net):
 
 def set_ss(net):
     pass
-

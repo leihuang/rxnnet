@@ -38,5 +38,30 @@ class Matrix(pd.DataFrame):
     """
     """
     
+    @property
+    def rowvarids(self):
+        return self.index.tolist()
+
+
+    @property
+    def colvarids(self):
+        return self.columns.tolist()
+
+
     def __mul__(self, other):
+        return Matrix(np.dot(self, other), self.index, other.columns)
+
+
+    def inv(self):
+        return Matrix(np.linalg.inv(self), self.columns, self.index)
+
+
+    def normalize(self):
         pass
+        
+
+    @classmethod
+    def eye(rowvarids, colvarids):
+        assert len(rowvarids) == len(colvarids)
+        return Matrix(np.eye(len(rowvarids)), rowvarids, colvarids)
+
