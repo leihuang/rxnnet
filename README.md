@@ -13,8 +13,8 @@ Structures:
 Behaviors:
 - dynamics x(t)
 - steady states s = x(inf) and J = v(s, p)
-- parameter sensitivities of them dx(t)/dp, Rs = ds/dp and RJ = dJ/dp 
-  - elasticities Ep = dv/dp and Ex = dv/dx 
+- parameter sensitivities of them dx(t)/dp, R<sup>s</sup> = ds/dp and R<sup>J</sup> = dJ/dp 
+  - elasticities E<sub>p</sub> = dv/dp and E<sub>x</sub> = dv/dx 
   - control matrices C<sup>s</sup> = -(N Es)^{-1} N and C<sup>J</sup> = I + Es Cs
 
 <!---
