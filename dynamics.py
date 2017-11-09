@@ -35,31 +35,21 @@ def integrate(net, times, p=None, x0=None, tol=None, varids=None):
     else:
         intermediate_output=False
 
-    # t0 == 0 and x0 == None
-    # t0 == 0 and x0 != None
-    # t0 != 0 and x0 == None
-    # t
-
-    # t0 != 0, x0 provided
-
-
-
-    # _times: for feeding the integrator
     t0 = times[0]
     if t0 == 0:
-        x0 = net.x0
         _times = times
-    elif t0 != 0 and x0 != net.x:
-        x0 = net.x0
-        _times = [0] + list(times)  
-    else:  # t0 not 0 but t0 equal to net.t
-        x0 = net.x
-        _times = np.array(times) - t0
+    else:
+        _times = [0] + list(times)
 
     if p is not None:
         net.p = p
+
+    if x0 is None:
+        x0 = net.x0
+
     if tol is None:
         tol = TOL
+
     if not hasattr(net, 'res_function'):
         net.compile()
     
@@ -73,15 +63,12 @@ def integrate(net, times, p=None, x0=None, tol=None, varids=None):
     traj[0] = x0
     times = out[1]
 
-    if t0 != 0 and t0 != net.t:
+    if t0 != 0:
         idx_t0 = list(times).index(t0)
         times = times[idx_t0:]
         traj = traj[idx_t0:]
-    if t0 != 0 and t0 == net.t:
-        times = times + t0
 
     net.x = traj[-1]
-    net.t = times[-1]  
 
     return Trajectory(traj, index=pd.Index(times, name='time'), 
                       columns=net.xids)
