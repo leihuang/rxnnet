@@ -37,6 +37,10 @@ class Series(pd.Series):
 class Matrix(pd.DataFrame):
     """
     """
+    @property
+    def _constructor(self):
+        return Matrix
+
     
     @property
     def rowvarids(self):
@@ -56,12 +60,31 @@ class Matrix(pd.DataFrame):
         return Matrix(np.linalg.inv(self), self.columns, self.index)
 
 
-    def normalize(self):
-        pass
+    def normalize(self, y=None, x=None):
+        """
+        M = dy / dx
+        M_normed = d logy/d logx = diag(1/y) * M * diag(x)
+        """
+        mat = self
+        if y is not None:
+            mat = Matrix.diag(1/y) * mat
+        if x is not None:
+            mat = mat * Matrix.diag(x)
+        return mat 
         
 
-    @classmethod
-    def eye(rowvarids, colvarids):
-        assert len(rowvarids) == len(colvarids)
+    @staticmethod
+    def eye(rowvarids, colvarids=None):
+        if colvarids is None:
+            colvarids = rowvarids
         return Matrix(np.eye(len(rowvarids)), rowvarids, colvarids)
+
+
+    @staticmethod
+    def diag(x):
+        """Return the diagonal matrix of series x. 
+        
+        D(x) = diag(x)
+        """
+        return Matrix(np.diag(x), x.index, x.index)
 
