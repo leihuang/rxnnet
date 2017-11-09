@@ -14,9 +14,9 @@ import scipy as sp
 from util import Series
 
 
-TMIN = 1e3
-TMAX = 1e9
-K = 1e3
+TMIN = 1e2
+TMAX = 1e8
+K = 1e2
 TOL = 1e-10  # tolerance for testing steady state
 METHOD = 'integration'
 
@@ -27,7 +27,9 @@ def get_dxdt(net):
     """
     if not hasattr(net, 'res_function'):
         net.compile()
-    dxdt = net.res_function(net.t, x, np.zeros(len(x)), net.constants)
+    # assume it is an autonomous dynamical system 
+    # (time-invariant, hence t=0 here)
+    dxdt = net.res_function(0, net.x, np.zeros(net.xdim), net.constants)
     return Series(dxdt, index=net.xids)
 
 
@@ -45,19 +47,20 @@ def test_ss(net, tol=None):
     """
     if tol is None:
         tol = TOL
-    if np.max(np.abs(net.get_dxdt())) < tol:
+    if np.max(np.abs(get_dxdt(net))) < tol:
         return True
     else:
         return False
     
 
-def get_s_integration(net, p=None, Tmin=None, Tmax=None, k=None, tol=None):
+def get_s_integration(net, p=None, Tmin=None, Tmax=None, k=None, 
+                      tol=None, tol_integrator=None):
     """
-    Input:
-        T0:
-        Tmax:
-        k:
-        tol:
+    :param T0:
+    :param Tmax:
+    :param k:
+    :param tol:
+    :param tol_integrator:
     """
     # delayed argument binding to propagate changes in the settings of 
     # global variables
@@ -76,14 +79,21 @@ def get_s_integration(net, p=None, Tmin=None, Tmax=None, k=None, tol=None):
     if net.test_ss(tol=tol):
         return net.x
     else:
-        t = Tmin
-        while t <= Tmax:
+        t_current= 0
+        t_goal = Tmin
+        x0 = net.x0
 
-            net.update(t=t)  # could spit out daeintException
-            if net.is_ss(tol=tol_ss):
+        while t_goal <= Tmax:
+            _traj = net.integrate([0,t_goal-t_current], x0=x0, 
+                                  tol=tol_integrator)
+
+            if net.test_ss(tol=tol):
                 return net.x
             else:
-                t *= k
+                t_goal *= k
+                t_current = t_goal
+                x0 = net.x
+
         raise Exception("Unable to reach steady state for p: %s"%\
                         str(net.p.tolist()))
 
@@ -92,9 +102,23 @@ def get_s_rootfinding(net):
     pass
 
 
-def get_s(net):
-    pass
+def get_s(net, method=None, *args, **kwargs):
+    """
+    """
+    if method is None:
+        method = METHOD
+
+    if method == 'integration':
+        return get_s_integration(net, *args, **kwargs)
+    elif method == 'rootfinding':
+        return get_s_rootfinding(net, *args, **kwargs)
+    else:
+        raise ValueError
 
 
-def set_ss(net):
-    pass
+def set_ss(net, tol=None, **kwargs):
+    """
+    """
+    get_s(net, tol=tol, **kwargs)
+
+

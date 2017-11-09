@@ -12,6 +12,7 @@ from rxnnet.util import Series
 from rxnnet import structure, dynamics, steadystate
 reload(structure)
 reload(dynamics)
+reload(steadystate)
 
 
 class Network(object, scrn.Network):  # scrn.Network is an old-style class
@@ -257,8 +258,19 @@ class Network(object, scrn.Network):  # scrn.Network is an old-style class
     get_s.__doc__ = steadystate.get_s.__doc__
 
 
-    def set_ss(self):
-        pass
+    def get_dxdt(self):
+        return steadystate.get_dxdt(self)
+    get_dxdt.__doc__ = steadystate.get_dxdt.__doc__
+
+
+    def test_ss(self, tol=None):
+        return steadystate.test_ss(self, tol)
+    test_ss.__doc__ = steadystate.test_ss.__doc__
+
+
+    def set_ss(self, tol=None):
+        steadystate.set_ss(self, tol)
+    set_ss.__doc__ = steadystate.set_ss.__doc__
 
 
     @property

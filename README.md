@@ -1,6 +1,6 @@
 # rxnnet
 
-A Python package for representing **reaction networks**, and computing their **structures** and **behaviors**. Currently implemented as a wrapper of SloppyCell (http://sloppycell.sourceforge.net/). 
+A Python package for representing **reaction networks**, and computing their **structures** and **behaviors**. Currently implemented as a wrapper of [SloppyCell](http://sloppycell.sourceforge.net/). 
 
 Mathematically, a reaction network can be represented as dx/dt = N v(x,p), where x, v and p are the concentration, rate and parameter vectors, respectively and N is the stoichiometry matrix.
 
@@ -30,6 +30,13 @@ What rxnnet can do:
      - get steady states
      - mca
 -->
+
+## Prerequisites
+* [`SloppyCell`](http://sloppycell.sourceforge.net/)
+* `pandas`
+* `numpy`
+* `scipy` (if using rootfinding to get steady states)
+* `sage` (for [getting the null spaces of a stoichiometry matrix](https://stackoverflow.com/questions/14407579/how-to-get-the-integer-eigenvectors-of-a-numpy-matrix))
 
 ## Usage examples
 
