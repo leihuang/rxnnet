@@ -3,12 +3,13 @@
 
 from __future__ import division
 
+import numpy as np
 from SloppyCell import ExprManip as exprmanip
 
 from util import Matrix
 
 
-def get_Ex_str(net):
+def get_concentration_elasticity_string(net):
     """
     """
     Ex = []
@@ -26,7 +27,7 @@ def get_Ex_str(net):
     return Ex_str, Ex_code
 
 
-def get_Ep_str(net):
+def get_parameter_elasticity_string(net):
     """
     """
     Ep = []
@@ -44,7 +45,7 @@ def get_Ep_str(net):
     return Ep_str, Ep_code
 
 
-def get_param_elas_mat(net, p=None, normed=False):
+def get_parameter_elasticity_matrix(net, p=None, normed=False):
     """
     TODO: compile or generate dynamic Python functions
     """
@@ -55,7 +56,7 @@ def get_param_elas_mat(net, p=None, normed=False):
 
     # assume no structural changes and attribute 'Ep_code' is up-to-date
     if not hasattr(net, 'Ep_code'):  
-        Ep_code = get_Ex_str(net)[1]
+        Ep_code = get_parameter_elasticity_string(net)[1]
     else:
         Ep_code = net.Ep_code
 
@@ -68,7 +69,7 @@ def get_param_elas_mat(net, p=None, normed=False):
         return Ep
 
 
-def get_concn_elas_mat(net, p=None, normed=False):
+def get_concentration_elasticity_matrix(net, p=None, normed=False):
     """
     """
     net.update(p=p, t=np.inf)
@@ -78,7 +79,7 @@ def get_concn_elas_mat(net, p=None, normed=False):
 
     # assume no structural changes and attribute 'Ex_code' is up-to-date
     if not hasattr(net, 'Ex_code'):  
-        Ex_code = get_Ex_str(net)[1]
+        Ex_code = get_concentration_elasticity_string(net)[1]
     else:
         Ex_code = net.Ex_code
 
@@ -91,7 +92,7 @@ def get_concn_elas_mat(net, p=None, normed=False):
         return Es
 
 
-def get_jac_mat(net, p=None):
+def get_jacobian_matrix(net, p=None):
     """Return the jacobian matrix of the network at steady state. 
 
     *In the MCA context*, it is the jacobian of the independent vector field
@@ -103,7 +104,7 @@ def get_jac_mat(net, p=None):
     return M
 
 
-def get_concn_ctrl_mat(net, p=None, normed=False):
+def get_concentration_control_matrix(net, p=None, normed=False):
     """
     """
     net.update(p=p, t=np.inf)
@@ -116,7 +117,7 @@ def get_concn_ctrl_mat(net, p=None, normed=False):
         return Cs
         
 
-def get_flux_ctrl_mat(net, p=None, normed=False):
+def get_flux_control_matrix(net, p=None, normed=False):
     """
     """
     net.update(p=p, t=np.inf)
@@ -129,7 +130,7 @@ def get_flux_ctrl_mat(net, p=None, normed=False):
         return CJ
     
 
-def get_concn_resp_mat(net, p=None, normed=False):
+def get_concentration_response_matrix(net, p=None, normed=False):
     """
     """
     net.update(p=p, t=np.inf)
@@ -142,7 +143,7 @@ def get_concn_resp_mat(net, p=None, normed=False):
         return Rs
 
 
-def get_flux_resp_mat(net, p=None, normed=False):
+def get_flux_response_matrix(net, p=None, normed=False):
     """
     """
     net.update(p=p, t=np.inf)

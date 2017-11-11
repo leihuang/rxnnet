@@ -9,10 +9,11 @@ import numpy as np
 import SloppyCell.ReactionNetworks as scrn 
 
 from rxnnet.util import Series
-from rxnnet import structure, dynamics, steadystate
+from rxnnet import structure, dynamics, steadystate, mca
 reload(structure)
 reload(dynamics)
 reload(steadystate)
+reload(mca)
 
 
 class Network(object, scrn.Network):
@@ -311,8 +312,6 @@ class Network(object, scrn.Network):
         return self.v
 
 
-
-
     def update(self, p=None, x=None, t=None):
         """
         """
@@ -328,6 +327,70 @@ class Network(object, scrn.Network):
                     self.set_ss()
             else:
                 pass
+
+
+    @property
+    def Es(self):
+        return mca.get_concentration_elasticity_matrix(self)
+
+
+    @property
+    def nEs(self):
+        return mca.get_concentration_elasticity_matrix(self, normed=True)
+
+
+    @property
+    def Ep(self):
+        return mca.get_parameter_elasticity_matrix(self)
+
+
+    @property
+    def nEp(self):
+        return mca.get_parameter_elasticity_matrix(self, normed=True)
+
+
+    @property
+    def M(self):
+        return mca.get_jacobian_matrix(self)
+
+
+    @property
+    def Cs(self):
+        return mca.get_concentration_control_matrix(self)
+
+
+    @property
+    def nCs(self):
+        return mca.get_concentration_control_matrix(self, normed=True)
+
+    @property
+    def CJ(self):
+        return mca.get_flux_control_matrix(self)
+
+
+    @property
+    def nCJ(self):
+        return mca.get_flux_control_matrix(self, normed=True)
+
+
+    @property
+    def Rs(self):
+        return mca.get_concentration_response_matrix(self)
+
+
+    @property
+    def nRs(self):
+        return mca.get_concentration_response_matrix(self, normed=True)
+
+
+    @property
+    def RJ(self):
+        return mca.get_flux_response_matrix(self)
+
+
+    @property
+    def nRJ(self):
+        return mca.get_flux_response_matrix(self, normed=True)
 
 
     def to_sbml(self, filepath):
