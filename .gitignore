@@ -35,5 +35,7 @@ Thumbs.db
 # Mathematica
 *.nb
 
+.tmp_sage.py
+
 # directories
 tmp/

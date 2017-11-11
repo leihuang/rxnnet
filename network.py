@@ -15,8 +15,11 @@ reload(dynamics)
 reload(steadystate)
 
 
-class Network(object, scrn.Network):  # scrn.Network is an old-style class
+class Network(object, scrn.Network):
     """
+
+    scrn.Network is an old-style class and we want to make extensive use of 
+    new-style class features such as properties, hence the double inheritance.
     """
 
     """
@@ -218,33 +221,49 @@ class Network(object, scrn.Network):  # scrn.Network is an old-style class
 
 
     def get_stoich_mat(self, *args, **kwargs):
-        return structure.get_stoich_mat(net=self, *args, **kwargs)
-    get_stoich_mat.__doc__ = structure.get_stoich_mat.__doc__
+        return structure.get_stoichiometry_matrix(net=self, *args, **kwargs)
+    get_stoich_mat.__doc__ = structure.get_stoichiometry_matrix.__doc__
 
 
     @property
     def N(self):
-        return self.get_stoich_mat(only_dynvar=True, integerize=False)
-
-
-    @property
-    def Nr(self):
-        pass
-
-
-    @property
-    def L(self):
-        pass
+        return structure.get_stoichiometry_matrix(self, only_dynvar=True, 
+                                                  integerize=False)
 
 
     @property
     def K(self):
-        pass
+        return structure.get_steadystate_flux_matrix(self)
 
 
     @property
     def P(self):
-        pass
+        return structure.get_pool_multiplicity_matrix(self)
+
+
+    @property
+    def dxids(self):
+        return structure.get_dependent_dynamical_variable_ids(self)
+
+
+    @property
+    def ixids(self):
+        return structure.get_independent_dynamical_variable_ids(self)
+
+
+    @property
+    def Nr(self):
+        return structure.get_reduced_stoichiometry_matrix(self)        
+
+
+    @property
+    def L0(self):
+        return structure.get_reduced_link_matrix(self)
+
+
+    @property
+    def L(self):
+        return structure.get_link_matrix(self)
 
 
     def integrate(self, *args, **kwargs):
@@ -292,6 +311,8 @@ class Network(object, scrn.Network):  # scrn.Network is an old-style class
         return self.v
 
 
+
+
     def update(self, p=None, x=None, t=None):
         """
         """
@@ -307,6 +328,19 @@ class Network(object, scrn.Network):  # scrn.Network is an old-style class
                     self.set_ss()
             else:
                 pass
+
+
+    def to_sbml(self, filepath):
+        """
+        """
+        # Setting the following two attributes to None because otherwise 
+        # _modifiers_ with stoichcoefs of 0 are not recognized 
+        # when exporting the net to SBML, which would cause problems
+        # when using the exported SBML in platforms such as Copasi or JWS
+        for rxn in self.reactions:
+            rxn.reactant_stoichiometry = None
+            rxn.product_stoichiometry = None
+        scrn.IO.to_SBML_file(self, filepath)
 
 
 
