@@ -95,9 +95,9 @@ def test_get_K(nets):
     assert net2.K.shape == (3,1) and np.allclose(net2.K, 1)
 
 
-def test_get_Nr(nets):
+def test_get_Nr_L(nets):
     net1, net2, net3 = nets
-    assert net3.ix    
+    assert np.allclose(net3.L * net3.Nr, net3.N)
 
     
 def test_integrate(nets):

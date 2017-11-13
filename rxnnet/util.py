@@ -34,6 +34,7 @@ class Series(pd.Series):
         return x 
 
 
+
 class Matrix(pd.DataFrame):
     """
     """
@@ -50,6 +51,16 @@ class Matrix(pd.DataFrame):
     @property
     def colvarids(self):
         return self.columns.tolist()
+
+
+    @property
+    def nrow(self):
+        return self.shape[0]
+
+
+    @property
+    def ncol(self):
+        return self.shape[1]
 
 
     def __mul__(self, other):
@@ -71,6 +82,11 @@ class Matrix(pd.DataFrame):
         if x is not None:
             mat = mat * Matrix.diag(x)
         return mat 
+
+
+    @property
+    def rank(self):
+        return np.linalg.matrix_rank(self)
         
 
     @staticmethod

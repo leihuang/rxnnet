@@ -5,6 +5,7 @@ from __future__ import division
 
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 from SloppyCell import daskr
 
 
@@ -12,7 +13,48 @@ TOL = 1e-12
 
 
 class Trajectory(pd.DataFrame):
-    pass
+    """
+    """
+    @property
+    def _constructor(self):
+        return Trajectory
+
+
+    def __init__(self, *args, **kwargs):
+        pd.DataFrame.__init__(self, *args, **kwargs)
+        self.index.name = 'time'
+        self.columns.name = 'varid'
+
+
+    @property
+    def times(self):
+        return self.index.tolist()
+
+
+    @property
+    def varids(self):
+        return self.columns.tolist()
+
+
+    def plot(self, varids=None, figsize=None, filepath='', show=True):
+        """
+        """
+        fig = plt.figure(figsize=figsize)
+        ax = fig.add_subplot(111)
+        if varids is not None:
+            traj = traj[varids]
+        else:
+            traj = self
+        ax.plot(traj.times, traj)
+        ax.set_xlabel('time')
+        ax.legend(traj.varids)
+        ax.set_xlim(left=self.times[0])
+        ax.set_ylim(bottom=0)
+        if filepath:
+            plt.savefig(filepath)
+        if show:
+            plt.show()
+
 
 
 def integrate(net, times, p=None, x0=None, tol=None, varids=None):
