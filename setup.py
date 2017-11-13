@@ -18,7 +18,7 @@ setup(name='rxnnet',
       description=('A Python package for representing reaction networks '
                    'and simulating their behaviors'),
       long_description=long_description,
-      packages=find_packages(exclude=['tests']),
+      packages=find_packages(exclude=['tests', 'docs']),
       url='https://github.com/leihuang/rxnnet',
       license='MIT',
       author='Lei Huang',
