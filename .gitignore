@@ -27,15 +27,13 @@ Thumbs.db
 
 .project
 .pydevproject
-
 .SloppyCell
-
 .cache
 
 # Mathematica
 *.nb
 
-.tmp_sage.py
+.tmp*
 
 # directories
 tmp/
