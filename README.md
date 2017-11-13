@@ -7,8 +7,7 @@ Mathematically, a reaction network can be represented as dx/dt = N v(x,p), where
 Structures:
 - stoichiometry matrix N
 - left and right null spaces of N
-- reduced stoichiometry matrix N<sub>r</sub> (a selection of N rows with trivial left null space)
-- link matrix L where N = L N<sub>r</sub>
+- reduced stoichiometry matrix N<sub>r</sub> (a selection of N's rows with trivial left null space) and link matrix L where N = L N<sub>r</sub>
 
 Behaviors:
 - dynamics x(t)
@@ -43,7 +42,7 @@ What rxnnet can do:
 ```python
 import rxnnet
 
-net = rxnnet.Network()
+net = rxnnet.network.Network('')
 net.add_species('C1')
 net.add_species('X')
 net.add_species('C2')
