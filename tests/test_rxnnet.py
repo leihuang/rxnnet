@@ -13,10 +13,7 @@ Behaviors:
     - CJ, Cs, etc.
     - dxdt?
     
-Design: 
-    - Two setup functions via fixture?
-    - Behavioral tests all in a class?
-    - How to iterate over the (class) setup functions then?
+
 """
 
 import pytest
