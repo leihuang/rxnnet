@@ -45,12 +45,14 @@ What rxnnet can do:
 import rxnnet
 
 net = rxnnet.network.Network('')
-net.add_species('C1')
-net.add_species('X')
-net.add_species('C2')
-net.add_reaction('C1<->X')
-net.add_reaction('X<->C2')
+net.add_compartment(id='env')
+net.add_compartment(id='cell')
+net.add_species(id='C1', compartment='env', initial_value=2, is_constant=True)
+net.add_species(id='C2', compartment='env', initial_value=1, is_constant=True)
+net.add_species(id='X', compartment='cell', initial_value=0)
+net.add_reaction(id='R1', eqn='C1<->X', ratelaw='k1*(C1-X)', p={'k1':1})
+net.add_reaction(id='R2', eqn='X<->C2', ratelaw='k2*(X-C2)', p={'k2':2})
 
-traj = net.get_traj((0,10))
+traj = net.integrate((0,10))
 traj.plot()
 ```
