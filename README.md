@@ -34,8 +34,10 @@ What rxnnet can do:
 * [`SloppyCell`](http://sloppycell.sourceforge.net/)
 * `pandas`
 * `numpy`
-* `scipy` (if using rootfinding to get steady states)
-* `sage` (for [getting the null spaces of a stoichiometry matrix](https://stackoverflow.com/questions/14407579/how-to-get-the-integer-eigenvectors-of-a-numpy-matrix))
+* `matplotlib` (optional; for plotting dynamics)
+* `scipy` (optional; for using rootfinding to get steady states)
+* `sage` (optional; for [getting the integer-valued null spaces of a stoichiometry matrix](https://stackoverflow.com/questions/14407579/how-to-get-the-integer-eigenvectors-of-a-numpy-matrix))
+* [`libsbml`](http://sbml.org/Software/libSBML/docs/python-api/) (optional; for importing and exporting SBML files)
 
 ## Usage examples
 
