@@ -1,8 +1,11 @@
 """
 """
 
+from __future__ import absolute_import, division, print_function
+
 import pandas as pd
 import numpy as np
+
 
 
 class Series(pd.Series):
@@ -31,18 +34,23 @@ class Series(pd.Series):
             x = self * np.random.lognormal(size=self.size, **kwargs)
         if distribution == 'normal':
             x = self + np.random.normal(size=self.size, **kwargs)
-        return x 
+        return x
 
 
 
-class Matrix(pd.DataFrame):
+class DF(pd.DataFrame):
     """
     """
     @property
     def _constructor(self):
-        return Matrix
-
+        return DF
     
+    
+    @property
+    def _constructor_sliced(self):
+        return Series
+
+
     @property
     def rowvarids(self):
         return self.index.tolist()
@@ -56,11 +64,20 @@ class Matrix(pd.DataFrame):
     @property
     def nrow(self):
         return self.shape[0]
-
+        
 
     @property
     def ncol(self):
         return self.shape[1]
+
+
+
+class Matrix(DF):
+    """
+    """
+    @property
+    def _constructor(self):
+        return Matrix
 
 
     def __mul__(self, other):
@@ -104,3 +121,47 @@ class Matrix(pd.DataFrame):
         """
         return Matrix(np.diag(x), x.index, x.index)
 
+
+
+def flatten(nested, depth=None):
+    """Flatten a nested sequence by a given depth.
+
+    :param depth: depth of flattening; a depth of 1 means one level down, and
+        the default is deepest possible
+
+    >>> util.flatten([1,[2,3],[[4]]], depth=1)
+    [1, 2, 3, [4]]
+    >>> util.flatten([1,[2,3],[[4]]])
+    [1, 2, 3, 4]
+    """
+    nested = list(nested)
+    
+    if depth is None:
+        depth = float('inf')
+
+    d = 1  # current depth
+
+    while d <= depth:
+        flattened = []
+        for elem in nested:
+            if hasattr(elem, '__iter__'):
+                flattened.extend(elem)
+            else:
+                flattened.append(elem)
+        if nested == flattened:
+            break
+        nested = flattened
+        d += 1
+
+    flattened = type(nested)(flattened)
+
+    return flattened
+
+
+
+def get_product(*iterables):
+    """
+    >>> get_product([1,2], [7,8,9], ['a'])
+    [(1, 7, 'a'), (1, 8, 'a'), (1, 9, 'a'), (2, 7, 'a'), (2, 8, 'a'), (2, 9, 'a')]
+    """
+    return pd.MultiIndex.from_product(iterables).tolist()
