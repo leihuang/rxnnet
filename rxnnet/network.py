@@ -1,19 +1,18 @@
 """
 """
 
-from __future__ import division
+from __future__ import absolute_import, division, print_function
 from collections import OrderedDict as OD 
 import re
+import copy
 
 import numpy as np
-import SloppyCell.ReactionNetworks as scrn 
+import SloppyCell.ReactionNetworks as scrn
+from SloppyCell import ExprManip as exprmanip
 
 from rxnnet.util import Series
 from rxnnet import structure, dynamics, steadystate, mca
-reload(structure)
-reload(dynamics)
-reload(steadystate)
-reload(mca)
+
 
 
 class Network(object, scrn.Network):
@@ -26,7 +25,7 @@ class Network(object, scrn.Network):
     """
     __slots__ = ('add_species', 'add_reaction', 
                  'xdim', 'pdim', 'vdim',
-                 'pids', #'p', 'p0', 
+                 'pids', 'p', 'p0', 
                  'xids', 'x', 'x0',
                  'c', 'constants', 
                  'rxnids', 'rxns', 'ratelaws',
@@ -44,12 +43,11 @@ class Network(object, scrn.Network):
 
     def __init__(self, *args, **kwargs):
         scrn.Network.__init__(self, *args, **kwargs)
-        """
-        Thoughts on self.t:
-            Can easily introduce bugs, whenver the vector field is changed
-            but self.t and self.x0 are not reset
-        """
-        self.t = 0
+
+        # Thoughts on self.t:
+        # Can easily introduce bugs, whenver the vector field is changed
+        # but self.t and self.x0 are not reset
+        # self.t = 0
 
 
     def add_species(self, id, compartment, initial_value=0, *args, **kwargs):
@@ -130,10 +128,16 @@ class Network(object, scrn.Network):
         
     @p.setter
     def p(self, p_new):
-        try:
-            self.set_var_vals(p_new.to_dict())
-        except AttributeError:
-            self.set_var_vals(dict(zip(self.pids, p_new)))
+        # It seems only calling SloppyCell's "update_optimizable_vars" (but 
+        # not set_var_ic, set_var_vals, etc.) would udpate the network 
+        # attribute "constantVarValues", which is important for many internal 
+        # computations in SloppyCell.
+        # I defined a new attribute "constants", which is implemented as a 
+        # property and guarantees to stay up-to-date, with the intention of
+        # replacing "constantVarValues", but still many internal computations
+        # in SloppyCell are beyond reach.
+        # Not handling this with enough care may introduce some cryptic bugs.
+        self.update_optimizable_vars(p_new)
 
 
     @property
@@ -145,6 +149,11 @@ class Network(object, scrn.Network):
     @property
     def xids(self):
         return self.dynamicVars.keys()
+
+
+    @property
+    def spids(self):
+        return self.species.keys()
 
 
     @property
@@ -215,10 +224,33 @@ class Network(object, scrn.Network):
         return Series(OD([(rxn.id, rxn.kineticLaw) for rxn in self.reactions]),
                       dtype=object)
 
+    
+    @property
+    def vids(self):
+        return map(lambda rxnid: 'v_'+rxnid, self.rxnids)
+
+
+    @property
+    def Jids(self):
+        return map(lambda rxnid: 'J_'+rxnid, self.rxnids)
+    
 
     @property
     def asgrules(self):
         return Series(OD(self.assignmentRules.items()), dtype=object)
+
+
+    def add_ratevars(self):
+        """Add rate variables.
+        """
+        for rxn in self.reactions:
+            rateid = 'v_' + rxn.id
+            try:
+                self.add_parameter(rateid, is_constant=False, 
+                                   is_optimizable=False)
+                self.add_assignment_rule(rateid, rxn.kineticLaw)
+            except ValueError:
+                pass
 
 
     def get_stoich_mat(self, *args, **kwargs):
@@ -312,7 +344,7 @@ class Network(object, scrn.Network):
         return self.v
 
 
-    def update(self, p=None, x=None, t=None):
+    def update(self, p=None, x=None, t=None, **kwargs):
         """
         """
         if p is not None:
@@ -323,10 +355,10 @@ class Network(object, scrn.Network):
 
         if t is not None:
             if t == np.inf:
-                if not self.test_ss():
-                    self.set_ss()
+                if not self.test_ss():  # FIXME
+                    self.set_ss(**kwargs)
             else:
-                pass
+                raise NotImplementedError
 
 
     @property
@@ -391,6 +423,121 @@ class Network(object, scrn.Network):
     @property
     def nRJ(self):
         return mca.get_flux_response_matrix(self, normed=True)
+
+
+    def replace_varid(self, varid_old, varid_new, only_expr=False):
+        """Change id of reaction, species, or parameter.
+        
+        :param only_expr: bool; if True, only replace varid in expressions 
+            such as reaction ratelaws or assignment rules but not variable ids; 
+            useful when varid_new == 'varid_old * r'
+        """
+        if only_expr:
+            f = lambda varid: varid
+        else:
+            f = lambda varid: varid_new if varid == varid_old else varid
+        
+        netid_new = f(self.id)
+        net_new = self.__class__(netid_new)
+        
+        for var in self.variables:
+            var_new = copy.deepcopy(var)
+            var_new.id = f(var.id)
+            net_new.variables.set(var_new.id, var_new)
+        
+        for rxn in self.reactions:
+            rxn_new = copy.deepcopy(rxn)
+            rxn_new.id = f(rxn.id)
+            rxn_new.stoichiometry = OD(zip(map(f, rxn.stoichiometry.keys()),
+                                           rxn.stoichiometry.values()))
+            try:
+                rxn_new.reactant_stoichiometry =\
+                    OD(zip(map(f, rxn.reactant_stoichiometry.keys()),
+                           rxn.reactant_stoichiometry.values()))
+                rxn_new.product_stoichiometry =\
+                    OD(zip(map(f, rxn.product_stoichiometry.keys()),
+                           rxn.product_stoichiometry.values()))
+            except AttributeError:  # some rxns have no reactant/product stoich
+                pass
+
+            rxn_new.parameters = set(map(f, rxn.parameters))
+            rxn_new.kineticLaw = exprmanip.sub_for_var(rxn.kineticLaw, 
+                                                       varid_old, varid_new)
+            net_new.reactions.set(rxn_new.id, rxn_new)
+
+        for varid, rule in self.assignmentRules.items():
+            net_new.assignmentRules.set(f(varid), 
+                exprmanip.sub_for_var(rule, varid_old, varid_new))
+        
+        for varid, rule in self.algebraicRules.items():
+            net_new.algebraicRules.set(
+                exprmanip.sub_for_var(varid, varid_old, varid_new), 
+                exprmanip.sub_for_var(rule, varid_old, varid_new))
+
+        for varid, rule in self.rateRules.items():
+            net_new.rateRules.set(f(varid), 
+                exprmanip.sub_for_var(rule, varid_old, varid_new))
+
+        for eid, event in self.events.items():
+            eid_new = f(eid)
+            trigger_new = exprmanip.sub_for_var(event.trigger, varid_old, 
+                                                varid_new)
+            assignments_new = OD(zip(map(f, event.event_assignments.keys()),
+                                     event.event_assignments.values()))
+            net_new.add_event(eid_new, trigger_new, assignments_new)
+            
+        net_new.functionDefinitions = self.functionDefinitions.copy()
+        for fid, f in net_new.functionDefinitions.items():
+            fstr = 'lambda %s: %s' % (','.join(f.variables), f.math)
+            net_new.namespace[fid] = eval(fstr, net_new.namespace)
+
+        # _makeCrossReferences will take care of at least the following 
+        # attributes:
+        # assignedVars, constantVars, optimizableVars, dynamicVars, 
+        # algebraicVars
+        net_new._makeCrossReferences()
+        return net_new
+
+
+    def replace_varids(self, mapping):
+        """
+        :param mapping: a mapping from old varids to new varids 
+        """
+        net_new = self.copy()
+        for varid_old, varid_new in mapping.items():
+            net_new = net_new.replace_varid(varid_old, varid_new)
+        return net_new
+
+
+    def perturb(self, condition):
+        """
+        """
+        if condition is None:  # wildtype  
+            return self.copy()
+        else:
+            net = self.copy()
+            for perturbation in condition:
+                varid, mode, strength = perturbation
+                if mode in ['*', '/', '+', '-']:
+                    varid_pert = '(%s%s%s)'%(varid, mode, strength)
+                    net = net.replace_varid(varid, varid_pert, only_expr=True)  
+                if mode == '=':
+                    net.set_var_val(varid, strength)  # need to verify...
+            return net
+
+
+    def get_predict(self, expts, **kwargs):
+        """
+        """
+        expts_dyn, expts_mca = expts.separate_by_time()
+
+        if expts_dyn.nrow > 1 and expts_mca.nrow == 0:
+            return dynamics.get_predict(self, expts_dyn, **kwargs)
+        elif expts_mca.nrow > 1 and expts_dyn.nrow == 0:
+            return mca.get_predict(self, expts_mca, **kwargs)
+        else:
+            return dynamics.get_predict(self, expts_dyn, **kwargs) +\
+                mca.get_predict(self, expts_mca, **kwargs)
 
 
     def to_sbml(self, filepath):
