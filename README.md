@@ -5,14 +5,14 @@ A Python package for representing **reaction networks**, and computing their **s
 Mathematically, a reaction network can be represented as dx/dt = N v(x,p), where x, v and p are the concentration, rate and parameter vectors, respectively and N is the stoichiometry matrix.
 
 Examples of structures:
-- stoichiometry matrix N
-- left and right null spaces of N
-- reduced stoichiometry matrix N<sub>r</sub> (a selection of N's rows with trivial left null space) and link matrix L where N = L N<sub>r</sub>
+- Stoichiometry matrix N
+- Left and right null spaces of N
+- Reduced stoichiometry matrix N<sub>r</sub> (a selection of N's rows with trivial left null space) and link matrix L where N = L N<sub>r</sub>
 
 Examples of behaviors:
-- dynamics x(t)
-- steady states s = x(inf) and J = v(s, p)
-- parameter sensitivities of them dx(t)/dp, R<sup>s</sup> = ds/dp and R<sup>J</sup> = dJ/dp 
+- Dynamics x(t)
+- Steady states s = x(inf) and J = v(s, p)
+- Parameter sensitivities of them dx(t)/dp, R<sup>s</sup> = ds/dp and R<sup>J</sup> = dJ/dp 
   - elasticities E<sub>p</sub> = dv/dp and E<sub>x</sub> = dv/dx 
   - control matrices C<sup>s</sup> = -(N E<sub>s</sub>)<sup>-1</sup> N and C<sup>J</sup> = I + E<sub>s</sub> C<sup>s</sup>
 
