@@ -44,7 +44,7 @@ What rxnnet can do:
 ```python
 import rxnnet
 
-net = rxnnet.network.Network('')
+net = rxnnet.network.Network('net')
 net.add_compartment(id='env')
 net.add_compartment(id='cell')
 net.add_species(id='C1', compartment='env', initial_value=2, is_constant=True)
