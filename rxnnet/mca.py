@@ -1,12 +1,14 @@
 """
 """
 
-from __future__ import division
+from __future__ import absolute_import, division, print_function
 
 import numpy as np
 from SloppyCell import ExprManip as exprmanip
 
-from util import Matrix
+from rxnnet import util
+from infotopo import predict
+
 
 
 def get_concentration_elasticity_string(net):
@@ -27,6 +29,7 @@ def get_concentration_elasticity_string(net):
     return Ex_str, Ex_code
 
 
+
 def get_parameter_elasticity_string(net):
     """
     """
@@ -45,11 +48,12 @@ def get_parameter_elasticity_string(net):
     return Ep_str, Ep_code
 
 
-def get_parameter_elasticity_matrix(net, p=None, normed=False):
+
+def get_parameter_elasticity_matrix(net, p=None, normed=False, **kwargs):
     """
     TODO: compile or generate dynamic Python functions
     """
-    net.update(p=p, t=np.inf)
+    net.update(p=p, t=np.inf, **kwargs)
 
     ns = net.namespace.copy()  # the namespace'd be contaminated without copy
     ns.update(net.varvals.to_dict())
@@ -60,19 +64,21 @@ def get_parameter_elasticity_matrix(net, p=None, normed=False):
     else:
         Ep_code = net.Ep_code
 
-    Ep = Matrix(np.array(eval(Ep_code, ns)), net.rxnids, net.pids)
+    Ep = util.Matrix(np.array(eval(Ep_code, ns)), net.rxnids, net.pids)
 
     if normed:
         nEp = Es.normalize(net.v, net.p)
         return nEp
     else:
         return Ep
+get_Ep = get_parameter_elasticity_matrix
 
 
-def get_concentration_elasticity_matrix(net, p=None, normed=False):
+
+def get_concentration_elasticity_matrix(net, p=None, normed=False, **kwargs):
     """
     """
-    net.update(p=p, t=np.inf)
+    net.update(p=p, t=np.inf, **kwargs)
 
     ns = net.namespace.copy()  # the namespace'd be contaminated without copy
     ns.update(net.varvals.to_dict())
@@ -83,31 +89,34 @@ def get_concentration_elasticity_matrix(net, p=None, normed=False):
     else:
         Ex_code = net.Ex_code
 
-    Es = Matrix(np.array(eval(Ex_code, ns)), net.rxnids, net.xids)
+    Es = util.Matrix(np.array(eval(Ex_code, ns)), net.rxnids, net.xids)
 
     if normed:
         nEs = Es.normalize(net.v, net.s)
         return nEs
     else:
         return Es
+get_Es = get_concentration_elasticity_matrix
 
 
-def get_jacobian_matrix(net, p=None):
+
+def get_jacobian_matrix(net, p=None, **kwargs):
     """Return the jacobian matrix of the network at steady state. 
 
     *In the MCA context*, it is the jacobian of the independent vector field
     dxi/dt = Nr * v(xi,xd,p), so that the matrix is invertible.
     """
-    net.update(p=p, t=np.inf)
+    net.update(p=p, t=np.inf, **kwargs)
     Nr, L, Es = net.Nr, net.L, net.Es
     M = Nr * Es * L
     return M
 
 
-def get_concentration_control_matrix(net, p=None, normed=False):
+
+def get_concentration_control_matrix(net, p=None, normed=False, **kwargs):
     """
     """
-    net.update(p=p, t=np.inf)
+    net.update(p=p, t=np.inf, **kwargs)
     L, M, Nr = net.L, net.M, net.Nr
     Cs = -L * M.inv() * Nr
     if normed:
@@ -115,25 +124,29 @@ def get_concentration_control_matrix(net, p=None, normed=False):
         return nCs
     else:
         return Cs
+get_Cs = get_concentration_control_matrix
+
         
 
-def get_flux_control_matrix(net, p=None, normed=False):
+def get_flux_control_matrix(net, p=None, normed=False, **kwargs):
     """
     """
-    net.update(p=p, t=np.inf)
-    I, Es, Cs = Matrix.eye(net.rxnids, net.rxnids), net.Es, net.Cs
+    net.update(p=p, t=np.inf, **kwargs)
+    I, Es, Cs = util.Matrix.eye(net.rxnids, net.rxnids), net.Es, net.Cs
     CJ = I + Es * Cs
     if normed:
         nCJ = CJ.normalize(net.J, net.J)
         return nCJ
     else:
         return CJ
+get_CJ = get_flux_control_matrix
+
     
 
-def get_concentration_response_matrix(net, p=None, normed=False):
+def get_concentration_response_matrix(net, p=None, normed=False, **kwargs):
     """
     """
-    net.update(p=p, t=np.inf)
+    net.update(p=p, t=np.inf, **kwargs)
     Ep, Cs = net.Ep, net.Cs
     Rs = Cs * Ep
     if normed:
@@ -141,12 +154,14 @@ def get_concentration_response_matrix(net, p=None, normed=False):
         return nRs
     else:
         return Rs
+get_Rs = get_concentration_response_matrix
 
 
-def get_flux_response_matrix(net, p=None, normed=False):
+
+def get_flux_response_matrix(net, p=None, normed=False, **kwargs):
     """
     """
-    net.update(p=p, t=np.inf)
+    net.update(p=p, t=np.inf, **kwargs)
     Ep, CJ = net.Ep, net.CJ
     RJ = CJ * Ep
     if normed:
@@ -154,4 +169,74 @@ def get_flux_response_matrix(net, p=None, normed=False):
         return nRJ
     else:
         return RJ
+get_RJ = get_flux_response_matrix
 
+
+
+def get_predict(net, expts, **kwargs):
+    """
+    :param net:
+    :param expts:
+    :param kwargs: kwargs for networks getting steady states
+    """
+    assert expts.get_times() == [np.inf]
+
+    # require varids to be the same; have not implemented heterogeneous varids 
+    # yet, but it can otherwise be easily achieved through predict composition
+    assert all(expts.varids.apply(lambda varids: varids==expts.varids.iloc[0]))
+
+    varids = expts.get_varids()
+
+    if set(varids) <= set(net.xids):
+        vartype = 's'
+        idxs = [net.xids.index(varid) for varid in varids]
+    elif set(varids) <= set(net.Jids):
+        vartype = 'J'
+        idxs = [net.Jids.index(varid) for varid in varids]
+    else:
+        vartype = 'sJ'
+        idxs = [(net.xids+net.Jids).index(varid) for varid in varids]
+        
+    net = net.copy()
+    if not net.compiled:
+        net.compile()
+
+    nets = [net.perturb(cond) for cond in expts.condition]
+    for net in nets:
+        _Ex_str = get_concentration_elasticity_string(net)
+        _Ep_str = get_parameter_elasticity_string(net)
+        _L = net.L
+        _Nr = net.Nr
+
+    def _f(p):
+        y = []
+        for net in nets:
+            net.update(p=p, t=np.inf, **kwargs)
+            if vartype == 's':
+                y_cond = net.x[idxs]
+            if vartype == 'J':
+                y_cond = net.v[idxs]
+            if vartype == 'sJ':
+                y_cond = np.concatenate((net.x, net.v))[idxs]
+            y.extend(y_cond.tolist())
+        return np.array(y)
+    
+    def _Df(p):
+        jac = []
+        for net in nets:
+            net.update(p=p, t=np.inf, **kwargs)
+            if vartype == 's':
+                #jac_cond = get_Rs(net, p, Nr, L, to_mat=1, **kwargs).loc[varids].dropna()  # why dropna?
+                jac_cond = net.Rs.iloc[idxs]
+            if vartype == 'J':
+                jac_cond = net.RJ.iloc[idxs]
+            if vartype == 'sJ': 
+                jac_cond = np.vstack((net.Rs, net.RJ)).iloc[idxs]
+            jac.extend(jac_cond.values.tolist())
+        return np.array(jac)
+
+    
+    pred = predict.Predict(f=_f, Df=_Df, p0=net.p0, pids=net.pids, 
+                           yids=expts.get_yids(), expts=expts, nets=nets)
+    
+    return pred
