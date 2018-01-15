@@ -34,7 +34,7 @@ class Experiments(util.DF):
             setattr(self, k, v)
         
 
-    def add(self, condition, varids, times):
+    def add_experiment(self, condition, varids, times):
         """
         :param condition: None or 3-tuple of (target, type, strength) of 
             perturbation
@@ -51,15 +51,18 @@ class Experiments(util.DF):
         """
         """
         def row2yids(row):
-            condition, varids, times = row
-            condid = '(%s)' %\
-                ', '.join([''.join(map(str, tu)) for tu in condition])
-            yids_row = [(condid, varid, time) for varid, time in 
-                        util.get_product(varids, times)]
+            yids_row = [(str(row.condition), varid, time) for varid, time in 
+                        util.get_product(row.varids, row.times)]
             return yids_row
-        yids = [str(tu).replace("'", "")[1:-1] for tu in 
-            util.flatten(self.apply(row2yids, axis=1), depth=1)]
+        yids = [str(tu).replace('"', '').replace("'", "")[1:-1] for tu in 
+                util.flatten(self.apply(row2yids, axis=1), depth=1)]
         return yids
+
+
+    def get_conditions(self):
+        """
+        """
+        return self.condition.drop_duplicates().tolist()
 
 
     def get_varids(self):
@@ -88,8 +91,8 @@ class Experiments(util.DF):
             len(times)>1 else True)),\
             "times cannot have both finite values and inf"
         
-        expts_dyn = expts[expts.times.apply(lambda times: times!=[np.inf])]
-        expts_mca = expts[expts.times.apply(lambda times: times==[np.inf])]
+        expts_dyn = self[self.times.apply(lambda times: times!=[np.inf])]
+        expts_mca = self[self.times.apply(lambda times: times==[np.inf])]
 
         return expts_dyn, expts_mca
 
@@ -105,10 +108,10 @@ def get_experiments(varids, uids, us=None):
     expts = Experiments()
 
     if uids == ['t']:
-        expts.add(None, varids, us)
+        expts.add_experiment(None, varids, us)
     else:
         conds = [tuple(zip(uids, ['=']*len(uids), u)) for u in us]
         for cond in conds:
-            expts.add(cond, varids, [np.inf])
+            expts.add_experiment(cond, varids, [np.inf])
     return expts
 
