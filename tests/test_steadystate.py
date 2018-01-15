@@ -15,7 +15,7 @@ def test_dxdt():
 
 
 def test_get_s():
-    assert np.isclose(path2mah.get_s().iloc[0], 1.3333333333333333)
+    assert np.isclose(path2mah.s.iloc[0], 1.3333333333333333)
     assert np.allclose(cycle3mah.s, [3.302775637731996, 2.3027756377319952])
 
 
