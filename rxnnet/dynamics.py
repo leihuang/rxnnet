@@ -43,7 +43,8 @@ class Trajectory(util.DF):
         return self.columns.tolist()
 
 
-    def plot(self, varids=None, figsize=None, filepath='', show=True):
+    def plot(self, varids=None, xylims=None, legendloc=None, 
+             figsize=None, filepath='', show=True):
         """
         """
         fig = plt.figure(figsize=figsize)
@@ -54,9 +55,17 @@ class Trajectory(util.DF):
             traj = self
         ax.plot(traj.times, traj)
         ax.set_xlabel('time')
-        ax.legend(traj.varids)
-        ax.set_xlim(left=self.times[0])
-        ax.set_ylim(bottom=0)
+        ax.legend(traj.varids, loc=legendloc)
+        
+        if xylims is not None:
+            if xylims[0] is not None:
+                ax.set_xlim(xylims[0])
+            if xylims[1] is not None:
+                ax.set_ylim(xylims[1])
+        else:
+            ax.set_xlim(left=self.times[0])
+            ax.set_ylim(bottom=0)
+
         if filepath:
             plt.savefig(filepath)
         if show:
