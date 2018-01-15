@@ -157,6 +157,11 @@ class Network(object, scrn.Network):
 
 
     @property
+    def Cids(self):
+        return [spid for spid in self.spids if spid not in self.xids]
+
+
+    @property
     def x0(self):
         return Series([var.initialValue for var in self.dynamicVars], 
                       self.xids, dtype=np.float)
@@ -174,6 +179,13 @@ class Network(object, scrn.Network):
             self.set_var_vals(x_new.to_dict())
         except AttributeError:
             self.set_var_vals(dict(zip(self.xids, x_new)))
+
+
+    @property
+    def v(self):
+        return Series(OD([(rxn.id, self.evaluate_expr(rxn.kineticLaw)) 
+                          for rxn in self.reactions]), 
+                      dtype=np.float)
 
 
     @property
@@ -305,11 +317,6 @@ class Network(object, scrn.Network):
     get_traj = integrate
 
 
-    def get_s(self, *args, **kwargs):
-        return steadystate.get_s(self, *args, **kwargs)
-    get_s.__doc__ = steadystate.get_s.__doc__
-
-
     def get_dxdt(self):
         return steadystate.get_dxdt(self)
     get_dxdt.__doc__ = steadystate.get_dxdt.__doc__
@@ -325,40 +332,24 @@ class Network(object, scrn.Network):
     set_ss.__doc__ = steadystate.set_ss.__doc__
 
 
+    def get_s(self, *args, **kwargs):
+        return steadystate.get_s(self, *args, **kwargs)
+    get_s.__doc__ = steadystate.get_s.__doc__
+
+
+    def get_J(self, *args, **kwargs):
+        return steadystate.get_J(self, *args, **kwargs)
+    get_J.__doc__ = steadystate.get_J.__doc__
+
+
     @property
     def s(self):
-        self.set_ss()
-        return self.x
-
-
-    @property
-    def v(self):
-        return Series(OD([(rxn.id, self.evaluate_expr(rxn.kineticLaw)) 
-                          for rxn in self.reactions]), 
-                      dtype=np.float)
+        return self.get_s(method=steadystate.METHOD, tol=steadystate.TOL)
 
 
     @property
     def J(self):
-        self.set_ss()
-        return self.v
-
-
-    def update(self, p=None, x=None, t=None, **kwargs):
-        """
-        """
-        if p is not None:
-            self.p = p
-
-        if x is not None:
-            self.x = x
-
-        if t is not None:
-            if t == np.inf:
-                if not self.test_ss():  # FIXME
-                    self.set_ss(**kwargs)
-            else:
-                raise NotImplementedError
+        return self.get_J(method=steadystate.METHOD, tol=steadystate.TOL)
 
 
     @property
@@ -423,6 +414,24 @@ class Network(object, scrn.Network):
     @property
     def nRJ(self):
         return mca.get_flux_response_matrix(self, normed=True)
+
+
+    def update(self, p=None, x=None, t=None, **kwargs):
+        """
+        """
+        if p is not None:
+            self.p = p
+
+        if x is not None:
+            self.x = x
+
+        if t is not None:
+            if t == np.inf:
+                tol = kwargs.pop('tol', steadystate.TOL)
+                if not self.test_ss(tol=tol):
+                    self.set_ss(tol=tol, **kwargs)
+            else:
+                raise NotImplementedError
 
 
     def replace_varid(self, varid_old, varid_new, only_expr=False):
@@ -516,6 +525,8 @@ class Network(object, scrn.Network):
             return self.copy()
         else:
             net = self.copy()
+            if isinstance(condition[0], str):
+                condition = (condition,)
             for perturbation in condition:
                 varid, mode, strength = perturbation
                 if mode in ['*', '/', '+', '-']:
@@ -531,9 +542,9 @@ class Network(object, scrn.Network):
         """
         expts_dyn, expts_mca = expts.separate_by_time()
 
-        if expts_dyn.nrow > 1 and expts_mca.nrow == 0:
+        if expts_dyn.nrow >= 1 and expts_mca.nrow == 0:
             return dynamics.get_predict(self, expts_dyn, **kwargs)
-        elif expts_mca.nrow > 1 and expts_dyn.nrow == 0:
+        elif expts_mca.nrow >= 1 and expts_dyn.nrow == 0:
             return mca.get_predict(self, expts_mca, **kwargs)
         else:
             return dynamics.get_predict(self, expts_dyn, **kwargs) +\
