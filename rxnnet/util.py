@@ -2,9 +2,15 @@
 """
 
 from __future__ import absolute_import, division, print_function
+import logging
 
 import pandas as pd
 import numpy as np
+
+
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.WARNING)
 
 
 
@@ -93,11 +99,22 @@ class Matrix(DF):
         M = dy / dx
         M_normed = d logy/d logx = diag(1/y) * M * diag(x)
         """
-        mat = self
+        mat = self.copy()
+
         if y is not None:
-            mat = Matrix.diag(1/y) * mat
+            if any(np.isclose(y, 0)):
+                # expect whenever y has 0, the corresponding rows in mat are 
+                # also 0
+                idxs = np.where(y==0)[0]
+                assert np.allclose(self.iloc[idxs], 0)
+                logger.debug("y has 0 in matrix normalization")
+                y[idxs] = np.inf  # let 0/0 -> 0
+
+            mat = np.multiply((1/np.array(y))[:,np.newaxis], mat)
+
         if x is not None:
-            mat = mat * Matrix.diag(x)
+            mat = np.multiply(mat, np.array(x))
+
         return mat 
 
 
