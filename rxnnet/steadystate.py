@@ -6,19 +6,25 @@
     - set_ss
 """
 
-from __future__ import division
+from __future__ import absolute_import, division, print_function
+import logging
 
 import numpy as np
 import scipy as sp
 
-from util import Series
+from rxnnet.util import Series, DF
 
 
-TMIN = 1e2
-TMAX = 1e8
-K = 1e2
+
+TMIN = 1e3
+TMAX = 1e9
+K = 1e3
 TOL = 1e-10  # tolerance for testing steady state
 METHOD = 'integration'
+
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.WARNING)
 
 
 def get_dxdt(net):
@@ -47,21 +53,28 @@ def test_ss(net, tol=None):
     """
     if tol is None:
         tol = TOL
-    if np.max(np.abs(get_dxdt(net))) < tol:
+    dxdt = get_dxdt(net)
+
+    logger.debug("x and dxdt for %s:\n%s" % (net.id, 
+        DF([net.x, dxdt], ['x','dxdt']).T.__str__()))
+
+    if np.max(np.abs(dxdt)) < tol:
         return True
     else:
         return False
     
 
 def get_s_integration(net, p=None, Tmin=None, Tmax=None, k=None, 
-                      tol=None, tol_integrator=None):
+                      tol=None, **kwargs):
     """
     :param T0:
     :param Tmax:
     :param k:
     :param tol:
-    :param tol_integrator:
+    :param kwargs: kwargs for integrator
     """
+    logger.debug("Get s through integration for network %s" % net.id)
+
     # delayed argument binding to propagate changes in the settings of 
     # global variables
     if Tmin is None:
@@ -75,7 +88,7 @@ def get_s_integration(net, p=None, Tmin=None, Tmax=None, k=None,
         
     if p is not None:
         net.p = p
-        
+
     if net.test_ss(tol=tol):
         return net.x
     else:
@@ -84,18 +97,22 @@ def get_s_integration(net, p=None, Tmin=None, Tmax=None, k=None,
         x0 = net.x0
 
         while t_goal <= Tmax:
+            logger.debug("Integrate %s from %d to %d" %\
+                (net.id, t_current, t_goal))
+
             _traj = net.integrate([0,t_goal-t_current], x0=x0, 
-                                  tol=tol_integrator)
+                                  **kwargs)
 
             if net.test_ss(tol=tol):
                 return net.x
             else:
-                t_goal *= k
                 t_current = t_goal
+                t_goal *= k
                 x0 = net.x
 
-        raise Exception("Unable to reach steady state for p: %s"%\
-                        str(net.p.tolist()))
+        logger.warn("Unable to reach steady state for p:\n%s"%\
+                    net.p.__str__())
+        raise Exception
 
 
 def get_s_rootfinding(net):
@@ -116,7 +133,14 @@ def get_s(net, method=None, *args, **kwargs):
         raise ValueError
 
 
-def set_ss(net, tol=None, **kwargs):
+def get_J(net, *args, **kwargs):
+    """Get steady-state flux.
+    """
+    set_ss(net, *args, **kwargs)
+    return Series(net.v.values, net.Jids)
+
+
+def set_ss(net, tol=None, method=None, **kwargs):
     """
     """
     get_s(net, tol=tol, **kwargs)
