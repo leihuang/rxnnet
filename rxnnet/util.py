@@ -103,7 +103,7 @@ class Matrix(DF):
 
         if y is not None:
             if any(np.isclose(y, 0)):
-                # expect whenever y has 0, the corresponding rows in mat are 
+                # expect wherever y has 0, the corresponding rows in mat are 
                 # also 0
                 idxs = np.where(y==0)[0]
                 assert np.allclose(self.iloc[idxs], 0)
